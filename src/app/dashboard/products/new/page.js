@@ -35,7 +35,7 @@ export default function NewProduct() {
     };
     
     // بررسی صحت ورودی‌ها
-    if (!productData.name || isNaN(productData.retailPrice) || isNaN(productData.wholesalePrice)) {
+    if (!productData.name || isNaN(productData.retailPrice)) {
       setError('لطفا تمام فیلدهای ضروری را پر کنید');
       return;
     }
