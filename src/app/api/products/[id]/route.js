@@ -80,15 +80,7 @@ export async function PUT(request, { params }) {
     }
     
     // بررسی تکراری نبودن SKU اگر تغییر کرده باشد
-    if (sku && sku !== product.sku) {
-      const existingProduct = await Product.findOne({ sku });
-      if (existingProduct && existingProduct._id.toString() !== id) {
-        return NextResponse.json(
-          { message: 'محصولی با این کد محصول (SKU) قبلاً ثبت شده است' },
-          { status: 400 }
-        );
-      }
-    }
+    
     
     // به‌روزرسانی محصول
     product.name = name;
