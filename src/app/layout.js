@@ -3,7 +3,7 @@ import { Providers } from "./providers";
 import { vazir, geistMono } from "./fonts";
 
 export const metadata = {
-  title: 'سیستم مدیریت محصولات پلاسکو - نسخه جدید ' + new Date().toLocaleTimeString(),
+  title: 'سیستم مدیریت محصولات پلاسکو',
   description: 'سیستم مدیریت محصولات پلاسکو',
   viewport: "width=device-width, initial-scale=1.0, maximum-scale=5.0",
 };

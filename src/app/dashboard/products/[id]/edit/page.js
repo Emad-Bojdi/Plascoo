@@ -197,10 +197,10 @@ export default function EditProduct() {
                     type="text"
                     value={formData.brand}
                     onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm border-2 border-red-400 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-pink-50"
+                    className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 "
                     placeholder="نام برند را وارد کنید"
                   />
-                  <span className="text-gray-500 text-xs mt-1">برندهای پیشنهادی: متفرقه، سامسونگ، اپل، شیائومی، هوآوی</span>
+                  
                 </div>
                 
                 <div>

@@ -5,12 +5,14 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+
 export default function Dashboard() {
   const { data: session } = useSession();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   
   // Search states
@@ -25,14 +27,9 @@ export default function Dashboard() {
   const [isSearching, setIsSearching] = useState(false);
   const nameInputRef = useRef(null);
 
-  // Debounce function
-  const debounce = (func, delay) => {
-    let timer;
-    return function(...args) {
-      clearTimeout(timer);
-      timer = setTimeout(() => func.apply(this, args), delay);
-    };
-  };
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // دریافت لیست محصولات
   useEffect(() => {
@@ -63,6 +60,14 @@ export default function Dashboard() {
   }, []);
 
   // جستجو با تاخیر برای فیلدهای متنی
+  const debounce = (func, delay) => {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => func.apply(this, args), delay);
+    };
+  };
+
   const debouncedTextSearch = useCallback(
     debounce(async (searchParams) => {
       try {
@@ -207,12 +212,13 @@ export default function Dashboard() {
   }, [isSearchOpen]);
 
   // اگر کاربر لاگین نشده باشد
-  if (session === null) {
+  if (!mounted || session === null) {
     return <div className="flex justify-center items-center min-h-screen">بارگذاری...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gray-100">
+      
       <header className="bg-white shadow hidden sm:block">
         <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">داشبورد مدیریت محصولات</h1>
@@ -240,7 +246,6 @@ export default function Dashboard() {
                 onClick={() => {
                   setIsSearchOpen(!isSearchOpen);
                   if (!isSearchOpen) {
-                    // فوکوس روی فیلد جستجو با کمی تاخیر
                     setTimeout(() => {
                       if (nameInputRef.current) {
                         nameInputRef.current.focus();
@@ -248,12 +253,12 @@ export default function Dashboard() {
                     }, 100);
                   }
                 }}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-500 text-white text-xs sm:text-sm rounded-md hover:bg-gray-600 flex-grow sm:flex-grow-0"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm rounded-md hover:bg-blue-600 flex-grow sm:flex-grow-0"
               >
                 {isSearchOpen ? 'بستن جستجو' : 'جستجوی پیشرفته (Ctrl+F)'}
               </button>
               <Link href="/dashboard/products/new"
-                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-md hover:bg-blue-700 flex-grow sm:flex-grow-0 text-center">
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700 flex-grow sm:flex-grow-0 text-center">
                 افزودن محصول جدید
               </Link>
             </div>
@@ -294,7 +299,7 @@ export default function Dashboard() {
                       name="brand"
                       value={searchParams.brand}
                       onChange={handleSearchChange}
-                      className="w-full px-3 py-2 text-xs border-2 border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]  text-gray-600"
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454] bg-white text-gray-600"
                       placeholder="جستجو با تایپ کردن نام برند"
                       autoComplete="off"
                     />
@@ -332,7 +337,7 @@ export default function Dashboard() {
                       name="minPrice"
                       value={searchParams.minPrice}
                       onChange={handleSearchChange}
-                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]  text-gray-600"
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454] bg-white text-gray-600"
                       placeholder="حداقل قیمت"
                       min="0"
                     />
@@ -346,7 +351,7 @@ export default function Dashboard() {
                       name="maxPrice"
                       value={searchParams.maxPrice}
                       onChange={handleSearchChange}
-                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]  text-gray-600"
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454] bg-white text-gray-600"
                       placeholder="حداکثر قیمت"
                       min="0"
                     />
@@ -357,13 +362,13 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded-md hover:bg-gray-300"
+                    className="px-3 py-1.5 bg-gray-100 text-gray-800 text-xs rounded-md hover:bg-gray-200"
                   >
                     پاک کردن فیلترها
                   </button>
                   <button
                     type="submit"
-                    className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700"
+                    className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-md hover:bg-green-700"
                   >
                     جستجو
                   </button>
@@ -387,13 +392,13 @@ export default function Dashboard() {
               </p>
               {products.length === 0 ? (
                 <Link href="/dashboard/products/new"
-                      className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-md hover:bg-blue-700">
+                      className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700">
                   افزودن اولین محصول
                 </Link>
               ) : (
                 <button
                   onClick={resetFilters}
-                  className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-500 text-white text-xs sm:text-sm rounded-md hover:bg-gray-600"
+                  className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 text-gray-800 text-xs sm:text-sm rounded-md hover:bg-gray-200"
                 >
                   پاک کردن فیلترها
                 </button>
@@ -432,7 +437,7 @@ export default function Dashboard() {
                         <td className="px-3 sm:px-6 py-2 sm:py-8 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           {product.name}
                         </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs text-gray-700 sm:text-sm ">
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs text-[#282828] sm:text-sm ">
                           {product.retailPrice.toLocaleString()}
                         </td>
                         <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-[#282828]">
@@ -452,7 +457,7 @@ export default function Dashboard() {
                             </Link>
                             <button 
                               onClick={() => deleteProduct(product._id)}
-                              className="text-red-600 hover:text-red-900 mr-[10px]"
+                              className="text-red-700 hover:text-red-900 mr-[10px] bg-transparent"
                             >
                               حذف
                             </button>
