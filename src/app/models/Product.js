@@ -1,33 +1,52 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
-const ProductSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'لطفا نام محصول را وارد کنید'],
-    trim: true,
+    required: [true, 'نام محصول الزامی است'],
+    trim: true
   },
   retailPrice: {
     type: Number,
-    required: [true, 'لطفا قیمت تکی را وارد کنید'],
+    required: [true, 'قیمت خرده فروشی الزامی است'],
+    min: [0, 'قیمت نمی‌تواند منفی باشد']
   },
   wholesalePrice: {
     type: Number,
-    required: [true, 'لطفا قیمت عمده را وارد کنید'],
-  },
-  sku: {
-    type: String,
-    unique: true,
-    sparse: true,
+    required: [true, 'قیمت عمده فروشی الزامی است'],
+    min: [0, 'قیمت نمی‌تواند منفی باشد']
   },
   brand: {
     type: String,
-    default: 'متفرقه',
+    trim: true
   },
-}, { 
-  timestamps: true 
+  category: {
+    type: String,
+    trim: true
+  },
+  sku: {
+    type: String,
+    trim: true,
+
+  },
+  description: {
+    type: String,
+    trim: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-// اگر مدل قبلاً وجود دارد از آن استفاده کن، در غیر این صورت یک مدل جدید بساز
-const Product = mongoose.models.Product || mongoose.model('Product', ProductSchema);
+// Update the updatedAt timestamp before saving
+productSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
+});
 
-export default Product; 
+module.exports = mongoose.models.Product || mongoose.model('Product', productSchema); 
