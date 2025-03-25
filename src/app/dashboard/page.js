@@ -39,8 +39,11 @@ export default function Dashboard() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        console.log('Fetching products...');
         const response = await fetch('/api/products');
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (!response.ok) {
           throw new Error(data.message || 'خطایی در دریافت محصولات رخ داده است');
@@ -60,68 +63,51 @@ export default function Dashboard() {
   }, []);
 
   // جستجو با تاخیر برای فیلدهای متنی
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedTextSearch = useCallback(
-    debounce(async () => {
+    debounce(async (searchParams) => {
       try {
         setIsSearching(true);
-        // ساخت پارامترهای URL با تمام فیلترهای فعلی
+        console.log('Searching with params:', searchParams);
+
+        // اگر همه فیلدهای جستجو خالی هستند، همه محصولات را نمایش بده
+        if (!searchParams.name && !searchParams.brand && !searchParams.minPrice && !searchParams.maxPrice && !searchParams.sku) {
+          setFilteredProducts(products);
+          setIsSearching(false);
+          return;
+        }
+
+        // ساخت پارامترهای URL
         const params = new URLSearchParams();
-        
-        if (searchParams.name) {
-          params.append('name', searchParams.name);
-          console.log('Searching by name:', searchParams.name);
-        }
-        
-        if (searchParams.brand) {
-          params.append('brand', searchParams.brand);
-          console.log('Searching by brand:', searchParams.brand);
-        }
-        
-        if (searchParams.sku) {
-          params.append('sku', searchParams.sku);
-          console.log('Searching by SKU:', searchParams.sku);
-        }
-        
+        if (searchParams.name) params.append('name', searchParams.name);
+        if (searchParams.brand) params.append('brand', searchParams.brand);
         if (searchParams.minPrice) params.append('minPrice', searchParams.minPrice);
         if (searchParams.maxPrice) params.append('maxPrice', searchParams.maxPrice);
-        
-        const url = `/api/products?${params}`;
-        console.log('Search URL:', url);
-        
-        const response = await fetch(url);
+        if (searchParams.sku) params.append('sku', searchParams.sku);
+
+        const response = await fetch(`/api/products?${params.toString()}`);
         const data = await response.json();
-        
-        if (response.ok) {
-          console.log('Search results:', data.products.length, 'products found');
-          setFilteredProducts(data.products);
+
+        if (!response.ok) {
+          throw new Error(data.message || 'خطا در جستجوی محصولات');
         }
+
+        setFilteredProducts(data.products);
       } catch (error) {
-        console.error('Error in text search:', error);
+        console.error('Error searching products:', error);
+        setError(error.message);
       } finally {
         setIsSearching(false);
       }
     }, 500),
-    [searchParams]
+    [products]
   );
 
   // تغییر پارامترهای جستجو
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    
-    // Log which field is being changed
-    console.log(`Field "${name}" changed to: "${value}"`);
-    
-    setSearchParams(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // اجرای جستجوی زنده برای فیلدهای متنی
-    if (name === 'name' || name === 'brand' || name === 'sku') {
-      console.log(`Triggering ${name} search with value: "${value}"`);
-      debouncedTextSearch();
-    }
+    const newSearchParams = { ...searchParams, [name]: value };
+    setSearchParams(newSearchParams);
+    debouncedTextSearch(newSearchParams);
   };
 
   // جستجو و فیلتر محصولات
@@ -154,9 +140,8 @@ export default function Dashboard() {
     }
   };
 
-  // ریست کردن فیلترها
-  const resetFilters = async () => {
-    // ابتدا پارامترهای جستجو را پاک می‌کنیم
+  // پاک کردن فیلترها
+  const resetFilters = () => {
     setSearchParams({
       name: '',
       brand: '',
@@ -164,27 +149,7 @@ export default function Dashboard() {
       maxPrice: '',
       sku: ''
     });
-    
-    // درخواست تمام محصولات بدون فیلتر
-    try {
-      setIsSearching(true);
-      setLoading(true);
-      const response = await fetch('/api/products');
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'خطایی در دریافت محصولات رخ داده است');
-      }
-      
-      setProducts(data.products);
-      setFilteredProducts(data.products);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setError(error.message);
-    } finally {
-      setIsSearching(false);
-      setLoading(false);
-    }
+    setFilteredProducts(products);
   };
 
   const deleteProduct = async (productId) => {
@@ -312,7 +277,7 @@ export default function Dashboard() {
                     name="name"
                     value={searchParams.name}
                     onChange={handleSearchChange}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]"
+                    className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454] text-gray-600"
                     placeholder="جستجو به صورت زنده با تایپ کردن"
                     autoComplete="off"
                   />
@@ -320,7 +285,7 @@ export default function Dashboard() {
                 
                 <div>
                   <label htmlFor="brand" className="block text-xs font-medium text-gray-700 mb-1">
-                    برند (ورود متن) {isSearching && <span className="text-blue-500 text-xs">(در حال جستجو...)</span>}
+                    برند  {isSearching && <span className="text-blue-500 text-xs">(در حال جستجو...)</span>}
                   </label>
                   <div className="relative">
                     <input
@@ -329,17 +294,17 @@ export default function Dashboard() {
                       name="brand"
                       value={searchParams.brand}
                       onChange={handleSearchChange}
-                      className="w-full px-3 py-2 text-xs border-2 border-red-400 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 placeholder:text-[#545454] bg-pink-50"
+                      className="w-full px-3 py-2 text-xs border-2 border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]  text-gray-600"
                       placeholder="جستجو با تایپ کردن نام برند"
                       autoComplete="off"
                     />
-                    <span className="absolute inset-y-0 right-2 flex items-center">
+                    {/* <span className="absolute inset-y-0 right-2 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
-                    </span>
+                    </span> */}
                   </div>
-                  <span className="text-gray-500 text-xs mt-1 block">این یک فیلد ورودی متن است، نه منوی کشویی</span>
+                  
                 </div>
                 
                 <div>
@@ -352,7 +317,7 @@ export default function Dashboard() {
                     name="sku"
                     value={searchParams.sku}
                     onChange={handleSearchChange}
-                    className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]"
+                    className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]  text-gray-600"
                     placeholder="جستجو با کد محصول"
                     autoComplete="off"
                   />
@@ -367,7 +332,7 @@ export default function Dashboard() {
                       name="minPrice"
                       value={searchParams.minPrice}
                       onChange={handleSearchChange}
-                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]"
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]  text-gray-600"
                       placeholder="حداقل قیمت"
                       min="0"
                     />
@@ -381,7 +346,7 @@ export default function Dashboard() {
                       name="maxPrice"
                       value={searchParams.maxPrice}
                       onChange={handleSearchChange}
-                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]"
+                      className="w-full px-3 py-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-[#545454]  text-gray-600"
                       placeholder="حداکثر قیمت"
                       min="0"
                     />

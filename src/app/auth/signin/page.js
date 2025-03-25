@@ -62,13 +62,13 @@ export default function SignIn() {
         
         <form className="mt-6 sm:mt-8 space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700">
-              ایمیل
+            <label htmlFor="userName" className="block text-xs sm:text-sm font-medium text-gray-700">
+              نام کاربری
             </label>
             <input
-              id="email"
-              name="email"
-              autoComplete="email"
+              id="userName"
+              name="userName"
+              autoComplete="userName"
               required
               value={userName}
               onChange={(e) => setUserName(e.target.value)}

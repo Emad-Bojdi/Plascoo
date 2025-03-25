@@ -128,13 +128,12 @@ export default function NewProduct() {
                 
                 <div>
                   <label htmlFor="wholesalePrice" className="block text-xs sm:text-sm font-medium text-gray-700">
-                    قیمت عمده (تومان) <span className="text-red-500">*</span>
+                    قیمت عمده (تومان) 
                   </label>
                   <input
                     id="wholesalePrice"
                     name="wholesalePrice"
                     type="number"
-                    required
                     value={formData.wholesalePrice}
                     onChange={handleChange}
                     className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm border border-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-500 placeholder:text-gray-400"
