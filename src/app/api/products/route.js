@@ -90,15 +90,6 @@ export async function POST(request) {
     await connectDB();
     
     // بررسی تکراری نبودن SKU اگر ارائه شده باشد
-    if (sku && sku.trim() !== "") {
-      const existingProduct = await Product.findOne({ sku });
-      if (existingProduct) {
-        return NextResponse.json(
-          { message: 'محصولی با این کد محصول (SKU) قبلاً ثبت شده است' },
-          { status: 400 }
-        );
-      }
-    }
     
     // ایجاد محصول جدید
     const product = await Product.create({
