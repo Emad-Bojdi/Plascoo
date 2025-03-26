@@ -13,8 +13,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const router = useRouter();
-  
+
   // Search states
   const [searchParams, setSearchParams] = useState({
     name: '',
@@ -41,11 +42,11 @@ export default function Dashboard() {
         console.log('Response status:', response.status);
         const data = await response.json();
         console.log('Response data:', data);
-        
+
         if (!response.ok) {
           throw new Error(data.message || 'خطایی در دریافت محصولات رخ داده است');
         }
-        
+
         setProducts(data.products);
         setFilteredProducts(data.products);
       } catch (error) {
@@ -62,7 +63,7 @@ export default function Dashboard() {
   // جستجو با تاخیر برای فیلدهای متنی
   const debounce = (func, delay) => {
     let timer;
-    return function(...args) {
+    return function (...args) {
       clearTimeout(timer);
       timer = setTimeout(() => func.apply(this, args), delay);
     };
@@ -119,7 +120,7 @@ export default function Dashboard() {
   const handleSearch = async () => {
     try {
       setLoading(true);
-      
+
       // ساخت پارامترهای URL
       const params = new URLSearchParams();
       if (searchParams.name) params.append('name', searchParams.name);
@@ -127,15 +128,15 @@ export default function Dashboard() {
       if (searchParams.sku) params.append('sku', searchParams.sku);
       if (searchParams.minPrice) params.append('minPrice', searchParams.minPrice);
       if (searchParams.maxPrice) params.append('maxPrice', searchParams.maxPrice);
-      
+
       // درخواست به API
       const response = await fetch(`/api/products?${params}`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || 'خطایی در جستجوی محصولات رخ داده است');
       }
-      
+
       setFilteredProducts(data.products);
     } catch (error) {
       console.error('Error searching products:', error);
@@ -190,7 +191,7 @@ export default function Dashboard() {
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault(); // جلوگیری از جستجوی مرورگر
         setIsSearchOpen(true);
-        
+
         // فوکوس روی فیلد جستجو با کمی تاخیر (برای اطمینان از رندر شدن)
         setTimeout(() => {
           if (nameInputRef.current) {
@@ -198,7 +199,7 @@ export default function Dashboard() {
           }
         }, 100);
       }
-      
+
       // Escape برای بستن جستجو
       if (e.key === 'Escape' && isSearchOpen) {
         setIsSearchOpen(false);
@@ -211,6 +212,54 @@ export default function Dashboard() {
     };
   }, [isSearchOpen]);
 
+  const handleSelectProduct = (productId) => {
+    setSelectedProducts(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      } else {
+        return [...prev, productId];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(product => product._id));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selectedProducts.length) return;
+    
+    if (!confirm(`آیا از حذف ${selectedProducts.length} محصول انتخاب شده اطمینان دارید؟`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/products/bulk-delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productIds: selectedProducts }),
+      });
+
+      if (!response.ok) {
+        throw new Error('خطا در حذف محصولات');
+      }
+
+      // Update the products list
+      setProducts(prev => prev.filter(product => !selectedProducts.includes(product._id)));
+      setFilteredProducts(prev => prev.filter(product => !selectedProducts.includes(product._id)));
+      setSelectedProducts([]);
+    } catch (error) {
+      console.error('Error deleting products:', error);
+      alert('خطا در حذف محصولات');
+    }
+  };
+
   // اگر کاربر لاگین نشده باشد
   if (!mounted || session === null) {
     return <div className="flex justify-center items-center min-h-screen">بارگذاری...</div>;
@@ -218,14 +267,14 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      
+
       <header className="bg-white shadow hidden sm:block">
         <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">داشبورد مدیریت محصولات</h1>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
             <span className="text-sm sm:text-base text-gray-600">خوش آمدید، {session?.user?.name}</span>
-            <Link href="/api/auth/signout" 
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm rounded-md hover:bg-red-700">
+            <Link href="/api/auth/signout"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm rounded-md hover:bg-red-700">
               خروج
             </Link>
           </div>
@@ -242,7 +291,7 @@ export default function Dashboard() {
               </Link>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              <button 
+              <button
                 onClick={() => {
                   setIsSearchOpen(!isSearchOpen);
                   if (!isSearchOpen) {
@@ -258,7 +307,7 @@ export default function Dashboard() {
                 {isSearchOpen ? 'بستن جستجو' : 'جستجوی پیشرفته (Ctrl+F)'}
               </button>
               <Link href="/dashboard/products/new"
-                    className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700 flex-grow sm:flex-grow-0 text-center">
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700 flex-grow sm:flex-grow-0 text-center">
                 افزودن محصول جدید
               </Link>
             </div>
@@ -287,7 +336,7 @@ export default function Dashboard() {
                     autoComplete="off"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="brand" className="block text-xs font-medium text-gray-700 mb-1">
                     برند  {isSearching && <span className="text-blue-500 text-xs">(در حال جستجو...)</span>}
@@ -309,9 +358,9 @@ export default function Dashboard() {
                       </svg>
                     </span> */}
                   </div>
-                  
+
                 </div>
-                
+
                 <div>
                   <label htmlFor="sku" className="block text-xs font-medium text-gray-700 mb-1">
                     کد محصول (SKU) {isSearching && <span className="text-blue-500 text-xs">(در حال جستجو...)</span>}
@@ -327,7 +376,7 @@ export default function Dashboard() {
                     autoComplete="off"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label htmlFor="minPrice" className="block text-xs font-medium text-gray-700 mb-1">حداقل قیمت (تومان)</label>
@@ -342,7 +391,7 @@ export default function Dashboard() {
                       min="0"
                     />
                   </div>
-                  
+
                   <div>
                     <label htmlFor="maxPrice" className="block text-xs font-medium text-gray-700 mb-1">حداکثر قیمت (تومان)</label>
                     <input
@@ -357,7 +406,7 @@ export default function Dashboard() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex justify-end gap-2 lg:col-span-4">
                   <button
                     type="button"
@@ -392,7 +441,7 @@ export default function Dashboard() {
               </p>
               {products.length === 0 ? (
                 <Link href="/dashboard/products/new"
-                      className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700">
+                  className="inline-block px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700">
                   افزودن اولین محصول
                 </Link>
               ) : (
@@ -410,54 +459,52 @@ export default function Dashboard() {
               <div className="hidden md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        نام محصول
+                    <tr className="bg-gray-50">
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          checked={selectedProducts.length === filteredProducts.length}
+                          onChange={handleSelectAll}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
                       </th>
-                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
-                        قیمت تکی (تومان)
-                      </th>
-                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        قیمت عمده (تومان)
-                      </th>
-                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        برند
-                      </th>
-                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        کد محصول
-                      </th>
-                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        عملیات
-                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام محصول</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">برند</th>
+                      
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">قیمت خرده</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">قیمت عمده</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredProducts.map((product) => (
-                      <tr key={product._id}>
-                        <td className="px-3 sm:px-6 py-2 sm:py-8 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
-                          {product.name}
+                      <tr key={product._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.includes(product._id)}
+                            onChange={() => handleSelectProduct(product._id)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
                         </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs text-[#282828] sm:text-sm ">
-                          {product.retailPrice.toLocaleString()}
-                        </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-[#282828]">
-                          {product.wholesalePrice.toLocaleString()}
-                        </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-[#282828]">
-                          {product.brand || product.category || 'متفرقه'}
-                        </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-[#282828]">
-                          {product.sku || '-'}
-                        </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-left text-xs sm:text-sm font-medium">
-                          <div className="flex flex-row">
-                            <Link href={`/dashboard/products/${product._id}/edit`}
-                                  className="text-blue-600 hover:text-blue-900">
+                        
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.sku || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.brand || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.retailPrice.toLocaleString()} تومان</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.wholesalePrice.toLocaleString()} تومان</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex items-center justify-start">
+                            <Link 
+                              href={`/dashboard/products/${product._id}/edit`}
+                              className="text-blue-600 hover:text-blue-900 mr-[10px]"
+                            >
                               ویرایش
                             </Link>
                             <button 
                               onClick={() => deleteProduct(product._id)}
-                              className="text-red-700 hover:text-red-900 mr-[10px] bg-transparent"
+                              className="text-red-600 hover:text-red-900 mr-[10px] bg-transparent"
                             >
                               حذف
                             </button>
@@ -467,15 +514,25 @@ export default function Dashboard() {
                     ))}
                   </tbody>
                 </table>
+                {selectedProducts.length > 0 && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={handleDeleteSelected}
+                      className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                      حذف {selectedProducts.length} محصول انتخاب شده
+                    </button>
+                  </div>
+                )}
               </div>
-              
+
               {/* Mobile Card View */}
               <div className="md:hidden">
                 <div className="grid grid-cols-1 gap-4 p-4">
                   {filteredProducts.map((product) => (
                     <div key={product._id} className="bg-white border rounded-lg shadow-sm p-4">
                       <h3 className="text-sm font-medium text-gray-900 mb-2">{product.name}</h3>
-                      
+
                       <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                         <div className='flex flex-col space-y-2'>
                           <p className="text-gray-500">قیمت تکی:</p>
@@ -494,13 +551,13 @@ export default function Dashboard() {
                           <p className="font-semibold text-[#282828]">{product.sku || '-'}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-end gap-3 border-t pt-2">
                         <Link href={`/dashboard/products/${product._id}/edit`}
-                              className="text-blue-600 hover:text-blue-900 text-xs font-medium">
+                          className="text-blue-600 hover:text-blue-900 text-xs font-medium">
                           ویرایش
                         </Link>
-                        <button 
+                        <button
                           onClick={() => deleteProduct(product._id)}
                           className="text-red-600 hover:text-red-900 text-xs font-medium"
                         >
@@ -511,7 +568,7 @@ export default function Dashboard() {
                   ))}
                 </div>
               </div>
-              
+
               <div className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-50 border-t border-gray-200">
                 <p className="text-xs sm:text-sm text-gray-500">
                   نمایش {filteredProducts.length} محصول {products.length !== filteredProducts.length ? `از ${products.length} محصول` : ''}
