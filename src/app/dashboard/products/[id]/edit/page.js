@@ -7,9 +7,11 @@ import Link from 'next/link';
 export default function EditProduct() {
   const [formData, setFormData] = useState({
     name: '',
-    retailPrice: '',
+    purchasePrice: '',
     wholesalePrice: '',
+    retailPrice: '',
     brand: '',
+    category: '',
     sku: '',
   });
   const [error, setError] = useState('');
@@ -34,9 +36,11 @@ export default function EditProduct() {
         // تنظیم فرم با اطلاعات دریافت شده
         setFormData({
           name: data.product.name,
-          retailPrice: data.product.retailPrice,
+          purchasePrice: data.product.purchasePrice,
           wholesalePrice: data.product.wholesalePrice,
+          retailPrice: data.product.retailPrice,
           brand: data.product.brand || data.product.category || 'متفرقه',
+          category: data.product.category || '',
           sku: data.product.sku || '',
         });
       } catch (error) {
@@ -150,6 +154,23 @@ export default function EditProduct() {
                 />
               </div>
               
+              <div>
+                <label htmlFor="purchasePrice" className="block text-xs sm:text-sm font-medium text-gray-700">
+                  قیمت خرید (تومان) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="purchasePrice"
+                  name="purchasePrice"
+                  type="number"
+                  required
+                  value={formData.purchasePrice}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="قیمت خرید را وارد کنید"
+                  min="0"
+                />
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label htmlFor="retailPrice" className="block text-xs sm:text-sm font-medium text-gray-700">
@@ -204,19 +225,34 @@ export default function EditProduct() {
                 </div>
                 
                 <div>
-                  <label htmlFor="sku" className="block text-xs sm:text-sm font-medium text-gray-700">
-                    کد محصول (SKU)
+                  <label htmlFor="category" className="block text-xs sm:text-sm font-medium text-gray-700">
+                    دسته بندی
                   </label>
                   <input
-                    id="sku"
-                    name="sku"
+                    id="category"
+                    name="category"
                     type="text"
-                    value={formData.sku}
+                    value={formData.category}
                     onChange={handleChange}
                     className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="کد محصول را وارد کنید"
+                    placeholder="دسته بندی را وارد کنید"
                   />
                 </div>
+              </div>
+              
+              <div>
+                <label htmlFor="sku" className="block text-xs sm:text-sm font-medium text-gray-700">
+                  کد محصول (SKU)
+                </label>
+                <input
+                  id="sku"
+                  name="sku"
+                  type="text"
+                  value={formData.sku}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="کد محصول را وارد کنید"
+                />
               </div>
               
               <div className="flex justify-end">

@@ -232,7 +232,7 @@ export default function Dashboard() {
 
   const handleDeleteSelected = async () => {
     if (!selectedProducts.length) return;
-    
+
     if (!confirm(`آیا از حذف ${selectedProducts.length} محصول انتخاب شده اطمینان دارید؟`)) {
       return;
     }
@@ -307,8 +307,12 @@ export default function Dashboard() {
                 {isSearchOpen ? 'بستن جستجو' : 'جستجوی پیشرفته (Ctrl+F)'}
               </button>
               <Link href="/dashboard/products/new"
-                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700 flex-grow sm:flex-grow-0 text-center">
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-md hover:bg-blue-700 w-full sm:w-auto text-center">
                 افزودن محصول جدید
+              </Link>
+              <Link href="/dashboard/products/new-with-profit"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-md hover:bg-green-700 w-full sm:w-auto text-center">
+                افزودن محصول با محاسبه سود
               </Link>
             </div>
           </div>
@@ -459,52 +463,60 @@ export default function Dashboard() {
               <div className="hidden md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
-                    <tr className="bg-gray-50">
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input
-                          type="checkbox"
-                          checked={selectedProducts.length === filteredProducts.length}
-                          onChange={handleSelectAll}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
+                    <tr>
+                    <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        نام محصول
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام محصول</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">برند</th>
+                    <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        کد محصول (SKU)
+                      </th>
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        برند
+                      </th>
                       
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">قیمت خرده</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">قیمت عمده</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        قیمت تکی (تومان)
+                      </th>
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        قیمت عمده (تومان)
+                      </th>
+                      
+                      
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        عملیات
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredProducts.map((product) => (
-                      <tr key={product._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="checkbox"
-                            checked={selectedProducts.includes(product._id)}
-                            onChange={() => handleSelectProduct(product._id)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
+                    {products.map((product) => (
+                      <tr key={product._id}>
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                          {product.name}
+                        </td>
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          {product.sku || '-'}
+                        </td>
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          {product.brand || '-'}
                         </td>
                         
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.sku || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.brand || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.retailPrice.toLocaleString()} تومان</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.wholesalePrice.toLocaleString()} تومان</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <div className="flex items-center justify-start">
-                            <Link 
-                              href={`/dashboard/products/${product._id}/edit`}
-                              className="text-blue-600 hover:text-blue-900 mr-[10px]"
-                            >
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          {product.retailPrice.toLocaleString()}
+                        </td>
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          {product.wholesalePrice.toLocaleString()}
+                        </td>
+
+
+                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-left text-xs sm:text-sm font-medium">
+                          <div className="flex space-x-2 space-x-reverse">
+                            <Link href={`/dashboard/products/${product._id}/edit`}
+                              className="text-blue-600 hover:text-blue-900">
                               ویرایش
                             </Link>
-                            <button 
+                            <button
                               onClick={() => deleteProduct(product._id)}
-                              className="text-red-600 hover:text-red-900 mr-[10px] bg-transparent"
+                              className="text-red-600 hover:text-red-900 mr-[10px]"
                             >
                               حذف
                             </button>
@@ -544,7 +556,7 @@ export default function Dashboard() {
                         </div>
                         <div className='flex flex-col space-y-2'>
                           <p className="text-gray-500">برند:</p>
-                          <p className="font-semibold text-[#282828]">{product.brand || product.category || 'متفرقه'}</p>
+                          <p className="font-semibold text-[#282828]">{product.brand || '-'}</p>
                         </div>
                         <div className='flex flex-col space-y-2'>
                           <p className="text-gray-500">کد محصول:</p>

@@ -33,7 +33,8 @@ export async function GET(request) {
     }
     
     if (brand) {
-      filter.brand = { $regex: brand, $options: 'i' };
+      // اطمینان از اینکه brand به درستی فیلتر می‌شود حتی اگر خالی باشد
+      filter.brand = brand === '' ? '' : { $regex: brand, $options: 'i' };
     }
     
     if (sku) {
@@ -59,7 +60,7 @@ export async function GET(request) {
     // دریافت محصولات با فیلتر
     const products = await Product.find(filter).sort({ createdAt: -1 });
     
-    return NextResponse.json({ products });
+    return NextResponse.json({ success: true, products });
     
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -84,7 +85,7 @@ export async function POST(request) {
     }
     
     // دریافت داده‌های محصول از درخواست
-    const { name, retailPrice, wholesalePrice, brand, sku } = await request.json();
+    const { name, retailPrice, wholesalePrice, brand, sku, purchasePrice } = await request.json();
     
     // اتصال به دیتابیس
     await connectDB();
@@ -96,12 +97,14 @@ export async function POST(request) {
       name,
       retailPrice,
       wholesalePrice,
-      brand,
-      sku: sku ? sku : undefined,
+      brand: brand || '', // اطمینان از اینکه brand همیشه یک مقدار دارد حتی اگر خالی باشد
+      purchasePrice: purchasePrice || undefined,
+      sku: sku || undefined,
       createdBy: session.user.id,
     });
     
     return NextResponse.json({ 
+      success: true,
       message: 'محصول با موفقیت ایجاد شد', 
       product 
     }, { status: 201 });

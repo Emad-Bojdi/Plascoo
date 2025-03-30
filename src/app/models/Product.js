@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
   name: {
@@ -6,32 +6,30 @@ const productSchema = new mongoose.Schema({
     required: [true, 'نام محصول الزامی است'],
     trim: true
   },
-  retailPrice: {
+  purchasePrice: {
     type: Number,
-    required: [true, 'قیمت خرده فروشی الزامی است'],
-    min: [0, 'قیمت نمی‌تواند منفی باشد']
+    required: false,
+    min: [0, 'قیمت خرید نمی‌تواند منفی باشد']
   },
   wholesalePrice: {
     type: Number,
-    required: [true, 'قیمت عمده فروشی الزامی است'],
-    min: [0, 'قیمت نمی‌تواند منفی باشد']
+    required: [true, 'قیمت عمده الزامی است'],
+    min: [0, 'قیمت عمده نمی‌تواند منفی باشد']
+  },
+  retailPrice: {
+    type: Number,
+    required: [true, 'قیمت تکی الزامی است'],
+    min: [0, 'قیمت تکی نمی‌تواند منفی باشد']
   },
   brand: {
     type: String,
-    trim: true
-  },
-  category: {
-    type: String,
-    trim: true
+    default: '',
   },
   sku: {
     type: String,
     trim: true,
-
-  },
-  description: {
-    type: String,
-    trim: true
+    unique: false,
+    sparse: true
   },
   createdAt: {
     type: Date,
@@ -43,10 +41,12 @@ const productSchema = new mongoose.Schema({
   }
 });
 
-// Update the updatedAt timestamp before saving
+// به‌روزرسانی خودکار updatedAt
 productSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-module.exports = mongoose.models.Product || mongoose.model('Product', productSchema); 
+const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+
+export default Product; 
