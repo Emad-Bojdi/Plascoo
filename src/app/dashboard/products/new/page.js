@@ -133,6 +133,7 @@ export default function NewProduct() {
                   <input
                     id="wholesalePrice"
                     name="wholesalePrice"
+                    
                     type="number"
                     value={formData.wholesalePrice}
                     onChange={handleChange}

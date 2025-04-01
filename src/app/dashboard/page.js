@@ -69,93 +69,92 @@ export default function Dashboard() {
     };
   };
 
-  const debouncedTextSearch = useCallback(
-    debounce(async (searchParams) => {
-      try {
-        setIsSearching(true);
-        console.log('Searching with params:', searchParams);
+  // A simple function to check if a string contains another string, case insensitive and ignoring spaces
+  const simpleMatch = (text, query) => {
+    if (!text || !query) return !query; // If query is empty, it's a match
 
-        // اگر همه فیلدهای جستجو خالی هستند، همه محصولات را نمایش بده
-        if (!searchParams.name && !searchParams.brand && !searchParams.minPrice && !searchParams.maxPrice && !searchParams.sku) {
-          setFilteredProducts(products);
-          setIsSearching(false);
-          return;
-        }
-
-        // ساخت پارامترهای URL
-        const params = new URLSearchParams();
-        if (searchParams.name) params.append('name', searchParams.name);
-        if (searchParams.brand) params.append('brand', searchParams.brand);
-        if (searchParams.minPrice) params.append('minPrice', searchParams.minPrice);
-        if (searchParams.maxPrice) params.append('maxPrice', searchParams.maxPrice);
-        if (searchParams.sku) params.append('sku', searchParams.sku);
-
-        const response = await fetch(`/api/products?${params.toString()}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'خطا در جستجوی محصولات');
-        }
-
-        setFilteredProducts(data.products);
-      } catch (error) {
-        console.error('Error searching products:', error);
-        setError(error.message);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 500),
-    [products]
-  );
+    // Normalize both strings: remove spaces and convert to lowercase
+    const normalizedText = String(text).replace(/\s+/g, '').toLowerCase();
+    const normalizedQuery = String(query).replace(/\s+/g, '').toLowerCase();
+    
+    return normalizedText.includes(normalizedQuery);
+  };
 
   // تغییر پارامترهای جستجو
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
+    console.log(`Search param changed: ${name} = ${value}`);
+    
+    // Update search parameters
     const newSearchParams = { ...searchParams, [name]: value };
     setSearchParams(newSearchParams);
-    debouncedTextSearch(newSearchParams);
+    
+    // Apply search filter
+    filterProducts(newSearchParams);
+  };
+
+  // Filter products based on search parameters
+  const filterProducts = (params) => {
+    try {
+      setIsSearching(true);
+      
+      // If all fields are empty, show all products
+      if (!params.name && !params.brand && !params.sku && !params.minPrice && !params.maxPrice) {
+        console.log('No search parameters - showing all products');
+        setFilteredProducts([...products]);
+        return;
+      }
+      
+      // Apply filters
+      const filtered = products.filter(product => {
+        if (!product) return false;
+        
+        // Text search fields
+        const nameMatch = !params.name || simpleMatch(product.name, params.name);
+        const brandMatch = !params.brand || simpleMatch(product.brand, params.brand);
+        const skuMatch = !params.sku || simpleMatch(product.sku, params.sku);
+        
+        // Price range
+        const minPriceMatch = !params.minPrice || 
+          (product.retailPrice && product.retailPrice >= Number(params.minPrice));
+        const maxPriceMatch = !params.maxPrice || 
+          (product.retailPrice && product.retailPrice <= Number(params.maxPrice));
+        
+        return nameMatch && brandMatch && skuMatch && minPriceMatch && maxPriceMatch;
+      });
+      
+      console.log(`Found ${filtered.length} matching products out of ${products.length}`);
+      setFilteredProducts(filtered);
+    } catch (error) {
+      console.error('Error filtering products:', error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // جستجو و فیلتر محصولات
-  const handleSearch = async () => {
-    try {
-      setLoading(true);
-
-      // ساخت پارامترهای URL
-      const params = new URLSearchParams();
-      if (searchParams.name) params.append('name', searchParams.name);
-      if (searchParams.brand) params.append('brand', searchParams.brand);
-      if (searchParams.sku) params.append('sku', searchParams.sku);
-      if (searchParams.minPrice) params.append('minPrice', searchParams.minPrice);
-      if (searchParams.maxPrice) params.append('maxPrice', searchParams.maxPrice);
-
-      // درخواست به API
-      const response = await fetch(`/api/products?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'خطایی در جستجوی محصولات رخ داده است');
-      }
-
-      setFilteredProducts(data.products);
-    } catch (error) {
-      console.error('Error searching products:', error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleSearch = () => {
+    console.log('Manual search with params:', searchParams);
+    filterProducts(searchParams);
   };
 
   // پاک کردن فیلترها
   const resetFilters = () => {
-    setSearchParams({
+    // Clear search form
+    const emptyParams = {
       name: '',
       brand: '',
       minPrice: '',
       maxPrice: '',
       sku: ''
-    });
-    setFilteredProducts(products);
+    };
+    
+    // Set empty search params
+    setSearchParams(emptyParams);
+    
+    // Reset to show all products
+    setFilteredProducts([...products]);
+    console.log(`Reset filters - showing all ${products.length} products`);
   };
 
   const deleteProduct = async (productId) => {
@@ -459,15 +458,24 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="bg-white overflow-hidden shadow rounded-lg">
+              {/* Display count of filtered products */}
+              <div className="p-3 bg-blue-50 text-blue-700 text-xs border-b border-blue-100">
+                {isSearching ? (
+                  <p>در حال جستجو...</p>
+                ) : (
+                  <p>نمایش {filteredProducts.length} محصول {products.length !== filteredProducts.length ? `از ${products.length} محصول` : ''}</p>
+                )}
+              </div>
+              
               {/* Desktop Table - Hidden on Mobile */}
               <div className="hidden md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                    <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         نام محصول
                       </th>
-                    <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         کد محصول (SKU)
                       </th>
                       <th scope="col" className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -488,42 +496,53 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {products.map((product) => (
-                      <tr key={product._id}>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
-                          {product.name}
-                        </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                          {product.sku || '-'}
-                        </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                          {product.brand || '-'}
-                        </td>
-                        
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                          {product.retailPrice.toLocaleString()}
-                        </td>
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                          {product.wholesalePrice.toLocaleString()}
-                        </td>
+                    {Array.isArray(filteredProducts) && filteredProducts.length > 0 ? (
+                      filteredProducts.map((product) => (
+                        <tr key={product._id}>
+                          <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
+                            {product.name}
+                          </td>
+                          <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                            {product.sku || '-'}
+                          </td>
+                          <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                            {product.brand || '-'}
+                          </td>
+                          
+                          <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                            {product.retailPrice ? product.retailPrice.toLocaleString() : 0}
+                          </td>
+                          <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                            {
+                              product.wholesalePrice !== null && product.wholesalePrice !== undefined 
+                                ? product.wholesalePrice.toLocaleString() 
+                                : 0
+                            }
+                          </td>
 
-
-                        <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-left text-xs sm:text-sm font-medium">
-                          <div className="flex space-x-2 space-x-reverse">
-                            <Link href={`/dashboard/products/${product._id}/edit`}
-                              className="text-blue-600 hover:text-blue-900">
-                              ویرایش
-                            </Link>
-                            <button
-                              onClick={() => deleteProduct(product._id)}
-                              className="text-red-600 hover:text-red-900 mr-[10px]"
-                            >
-                              حذف
-                            </button>
-                          </div>
+                          <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-left text-xs sm:text-sm font-medium">
+                            <div className="flex space-x-2 space-x-reverse">
+                              <Link href={`/dashboard/products/${product._id}/edit`}
+                                className="text-blue-600 hover:text-blue-900">
+                                ویرایش
+                              </Link>
+                              <button
+                                onClick={() => deleteProduct(product._id)}
+                                className="text-red-600 hover:text-red-900 mr-[10px]"
+                              >
+                                حذف
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" className="text-center py-4 text-gray-500">
+                          {isSearching ? 'در حال جستجو...' : 'هیچ محصولی یافت نشد'}
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
                 {selectedProducts.length > 0 && (
@@ -541,43 +560,53 @@ export default function Dashboard() {
               {/* Mobile Card View */}
               <div className="md:hidden">
                 <div className="grid grid-cols-1 gap-4 p-4">
-                  {filteredProducts.map((product) => (
-                    <div key={product._id} className="bg-white border rounded-lg shadow-sm p-4">
-                      <h3 className="text-sm font-medium text-gray-900 mb-2">{product.name}</h3>
+                  {Array.isArray(filteredProducts) && filteredProducts.length > 0 ? (
+                    filteredProducts.map((product) => (
+                      <div key={product._id} className="bg-white border rounded-lg shadow-sm p-4">
+                        <h3 className="text-sm font-medium text-gray-900 mb-2">{product.name}</h3>
 
-                      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                        <div className='flex flex-col space-y-2'>
-                          <p className="text-gray-500">قیمت تکی:</p>
-                          <p className="font-semibold text-[#282828]">{product.retailPrice.toLocaleString()} تومان</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                          <div className='flex flex-col space-y-2'>
+                            <p className="text-gray-500">قیمت تکی:</p>
+                            <p className="font-semibold text-[#282828]">{product.retailPrice ? product.retailPrice.toLocaleString() : 0} تومان</p>
+                          </div>
+                          <div className='flex flex-col space-y-2'>
+                            <p className="text-gray-500">قیمت عمده:</p>
+                            <p className="font-semibold text-[#282828]">{
+                              product.wholesalePrice !== null && product.wholesalePrice !== undefined 
+                                ? product.wholesalePrice.toLocaleString() 
+                                : 0
+                            } تومان</p>
+                          </div>
+                          <div className='flex flex-col space-y-2'>
+                            <p className="text-gray-500">برند:</p>
+                            <p className="font-semibold text-[#282828]">{product.brand || '-'}</p>
+                          </div>
+                          <div className='flex flex-col space-y-2'>
+                            <p className="text-gray-500">کد محصول:</p>
+                            <p className="font-semibold text-[#282828]">{product.sku || '-'}</p>
+                          </div>
                         </div>
-                        <div className='flex flex-col space-y-2'>
-                          <p className="text-gray-500">قیمت عمده:</p>
-                          <p className="font-semibold text-[#282828]">{product.wholesalePrice.toLocaleString()} تومان</p>
-                        </div>
-                        <div className='flex flex-col space-y-2'>
-                          <p className="text-gray-500">برند:</p>
-                          <p className="font-semibold text-[#282828]">{product.brand || '-'}</p>
-                        </div>
-                        <div className='flex flex-col space-y-2'>
-                          <p className="text-gray-500">کد محصول:</p>
-                          <p className="font-semibold text-[#282828]">{product.sku || '-'}</p>
+
+                        <div className="flex justify-end gap-3 border-t pt-2">
+                          <Link href={`/dashboard/products/${product._id}/edit`}
+                            className="text-blue-600 hover:text-blue-900 text-xs font-medium">
+                            ویرایش
+                          </Link>
+                          <button
+                            onClick={() => deleteProduct(product._id)}
+                            className="text-red-600 hover:text-red-900 text-xs font-medium"
+                          >
+                            حذف
+                          </button>
                         </div>
                       </div>
-
-                      <div className="flex justify-end gap-3 border-t pt-2">
-                        <Link href={`/dashboard/products/${product._id}/edit`}
-                          className="text-blue-600 hover:text-blue-900 text-xs font-medium">
-                          ویرایش
-                        </Link>
-                        <button
-                          onClick={() => deleteProduct(product._id)}
-                          className="text-red-600 hover:text-red-900 text-xs font-medium"
-                        >
-                          حذف
-                        </button>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      {isSearching ? 'در حال جستجو...' : 'هیچ محصولی یافت نشد'}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
 

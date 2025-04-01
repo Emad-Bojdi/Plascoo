@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema({
   },
   wholesalePrice: {
     type: Number,
-    required: [true, 'قیمت عمده الزامی است'],
+    required: false,
     min: [0, 'قیمت عمده نمی‌تواند منفی باشد']
   },
   retailPrice: {

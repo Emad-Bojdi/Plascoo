@@ -11,7 +11,6 @@ export default function EditProduct() {
     wholesalePrice: '',
     retailPrice: '',
     brand: '',
-    category: '',
     sku: '',
   });
   const [error, setError] = useState('');
@@ -36,11 +35,11 @@ export default function EditProduct() {
         // تنظیم فرم با اطلاعات دریافت شده
         setFormData({
           name: data.product.name,
-          purchasePrice: data.product.purchasePrice,
+          purchasePrice: data.product.purchasePrice || 0,
           wholesalePrice: data.product.wholesalePrice,
           retailPrice: data.product.retailPrice,
           brand: data.product.brand || data.product.category || 'متفرقه',
-          category: data.product.category || '',
+  
           sku: data.product.sku || '',
         });
       } catch (error) {
@@ -222,21 +221,6 @@ export default function EditProduct() {
                     placeholder="نام برند را وارد کنید"
                   />
                   
-                </div>
-                
-                <div>
-                  <label htmlFor="category" className="block text-xs sm:text-sm font-medium text-gray-700">
-                    دسته بندی
-                  </label>
-                  <input
-                    id="category"
-                    name="category"
-                    type="text"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="mt-1 block w-full px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="دسته بندی را وارد کنید"
-                  />
                 </div>
               </div>
               
