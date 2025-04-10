@@ -74,7 +74,19 @@ export default function ToysDashboard() {
   // تغییر پارامترهای جستجو
   const handleSearchChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
+    
+    // Ensure we always have a string value for text inputs
+    let newValue;
+    if (type === 'checkbox') {
+      newValue = checked;
+    } else if (type === 'number') {
+      // For number inputs, convert empty string to empty string (not null)
+      newValue = value === '' ? '' : value;
+    } else {
+      // For text inputs, ensure we have a string
+      newValue = value || '';
+    }
+    
     console.log(`Search param changed: ${name} = ${newValue}`);
     
     // Update search parameters
@@ -271,16 +283,30 @@ export default function ToysDashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
 
-      <header className="bg-white shadow hidden sm:block">
-        <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">مدیریت اسباب بازی‌ها</h1>
-          <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-            <span className="text-sm sm:text-base text-gray-600">خوش آمدید، {session?.user?.name}</span>
-            <Link href="/api/auth/signout"
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm rounded-md hover:bg-red-700">
-              خروج
-            </Link>
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">پنل مدیریت</h1>
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
+              <span className="text-sm sm:text-base text-gray-600">خوش آمدید، {session?.user?.name}</span>
+              <Link href="/api/auth/signout"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm rounded-md hover:bg-red-700">
+                خروج
+              </Link>
+            </div>
           </div>
+        </div>
+
+        {/* Navigation Menu */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200">
+          <nav className="flex space-x-8 space-x-reverse">
+            <Link href="/dashboard" className="px-3 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300">
+              محصولات
+            </Link>
+            <Link href="/dashboard/toys" className="px-3 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+              اسباب بازی‌ها
+            </Link>
+          </nav>
         </div>
       </header>
 
@@ -315,7 +341,7 @@ export default function ToysDashboard() {
                   افزودن با محاسبه سود
                 </Link>
                 <Link href="/dashboard/toys/new"
-                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-md hover:bg-blue-700 w-full sm:w-auto text-center">
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-md hover:bg-blue-700 w-full sm:w-auto text-center justify-center">
                   افزودن اسباب بازی جدید
                 </Link>
               </div>
@@ -378,12 +404,6 @@ export default function ToysDashboard() {
                   />
                 </div>
 
-                
-
-                
-
-                
-
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label htmlFor="wholesalePrice" className="block text-xs font-medium text-gray-700 mb-1">قیمت عمده (تومان)</label>
@@ -413,8 +433,6 @@ export default function ToysDashboard() {
                     />
                   </div>
                 </div>
-
-               
 
                 <div className="flex justify-end gap-2 lg:col-span-4">
                   <button
@@ -508,7 +526,6 @@ export default function ToysDashboard() {
                           <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                             {toy.sku}
                           </td>
-                        
                           <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                             {toy.brand || '-'}
                           </td>
@@ -562,34 +579,24 @@ export default function ToysDashboard() {
                     filteredToys.map((toy) => (
                       <div key={toy._id} className="bg-white border rounded-lg shadow-sm p-4">
                         <h3 className="text-sm font-medium text-gray-900 mb-2">{toy.name}</h3>
-
                         <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                           <div className='flex flex-col space-y-2'>
-                            <p className="text-gray-500">محدوده سنی:</p>
-                            <p className="font-semibold text-[#282828]">{toy.ageRange || '-'}</p>
-                          </div>
-                          <div className='flex flex-col space-y-2'>
-                            <p className="text-gray-500">دسته‌بندی:</p>
-                            <p className="font-semibold text-[#282828]">{toy.category || '-'}</p>
+                            <p className="text-gray-500">کد محصول:</p>
+                            <p className="font-semibold text-[#282828]">{toy.sku || '-'}</p>
                           </div>
                           <div className='flex flex-col space-y-2'>
                             <p className="text-gray-500">برند:</p>
                             <p className="font-semibold text-[#282828]">{toy.brand || '-'}</p>
                           </div>
                           <div className='flex flex-col space-y-2'>
-                            <p className="text-gray-500">قیمت:</p>
+                            <p className="text-gray-500">قیمت تکی:</p>
                             <p className="font-semibold text-[#282828]">{toy.retailPrice ? toy.retailPrice.toLocaleString() : 0} تومان</p>
                           </div>
                           <div className='flex flex-col space-y-2'>
-                            <p className="text-gray-500">موجودی:</p>
-                            <p className="font-semibold text-[#282828]">{toy.stockQuantity || 0}</p>
-                          </div>
-                          <div className='flex flex-col space-y-2'>
-                            <p className="text-gray-500">کد محصول:</p>
-                            <p className="font-semibold text-[#282828]">{toy.sku || '-'}</p>
+                            <p className="text-gray-500">قیمت عمده:</p>
+                            <p className="font-semibold text-[#282828]">{toy.wholesalePrice ? toy.wholesalePrice.toLocaleString() : 0} تومان</p>
                           </div>
                         </div>
-
                         <div className="flex justify-end gap-3 border-t pt-2">
                           <Link href={`/dashboard/toys/${toy._id}/edit`}
                             className="text-blue-600 hover:text-blue-900 text-xs font-medium">

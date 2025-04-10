@@ -267,18 +267,20 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
 
-      <header className="bg-white shadow hidden sm:block">
-        <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">داشبورد مدیریت محصولات</h1>
-          <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
-            <span className="text-sm sm:text-base text-gray-600">خوش آمدید، {session?.user?.name}</span>
-            <Link href="/api/auth/signout"
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm rounded-md hover:bg-red-700">
-              خروج
-            </Link>
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">پنل مدیریت</h1>
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center">
+              <span className="text-sm sm:text-base text-gray-600">خوش آمدید، {session?.user?.name}</span>
+              <Link href="/api/auth/signout"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm rounded-md hover:bg-red-700">
+                خروج
+              </Link>
+            </div>
           </div>
         </div>
-        
+
         {/* Navigation Menu */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200">
           <nav className="flex space-x-8 space-x-reverse">
@@ -315,7 +317,7 @@ export default function Dashboard() {
                 }}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm rounded-md hover:bg-blue-600 flex-grow sm:flex-grow-0"
               >
-                {isSearchOpen ? 'بستن جستجو' : 'جستجوی پیشرفته (Ctrl+F)'}
+                {isSearchOpen ? 'بستن جستجو' : 'جستجوی پیشرفته '}
               </button>
               <Link href="/dashboard/products/new"
                 className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-md hover:bg-blue-700 w-full sm:w-auto text-center">
